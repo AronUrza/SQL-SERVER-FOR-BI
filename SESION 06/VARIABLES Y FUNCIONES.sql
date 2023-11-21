@@ -1,0 +1,148 @@
+--------------------------------------------------------------------------
+--LAS VARIABLES O PARAMETROS 
+
+--DECLARANDO UNA VARIABLE 
+
+@NOM_VARIABLE VARCHAR(50)
+
+-- ASIGNAR UN VALOR A UNA VARIABLE 
+
+--ESCENARIO 1 
+SET @NOM_VARIABLE = 'HOLA MUNDO'
+
+
+RESULTADO  :    HOLA MUNDO 
+
+--ESCENARIO 2 
+
+SET @NOM_VARIABLE = 'HOLA MUNDO'
+
+SET @NOM_VARIABLE = 'HOLA PERU'
+
+RESULTADO : HOLA PERU 
+
+--ESCENARIO 3 
+
+SET @NOM_VARIABLE = 'HOLA MUNDO'
+
+SET @NOM_VARIABLE = CONCAT(@NOM_VARIABLE,'HOLA PERU')
+
+RESULTADO : HOLA MUNDO HOLA PERU 
+
+------------------------------------
+--DATOS NUMERICOS 
+
+@VAR_1 INT 
+
+--- ESCENARIO 1
+
+SET @VAR_1=1 
+
+RESULTADO : 1 
+
+--- ESCENARIO 2
+
+SET @VAR_1=1
+SET @VAR_1=15 
+
+RESULTADO : 15
+
+--ESCENARIO 3 
+
+SET @VAR_1=1
+SET @VAR_1= @VAR_1+ 15 
+
+
+RESULTADO : 16
+
+
+---------------------------
+------- PL\ SQL 
+
+DECLARE 
+--- DECLARO LAS VARIABLES 
+
+BEGIN 
+
+--- REALIZADO EL PROCESO DE TRANSFORMACION 
+END 
+
+-----------------------------------------------
+--escenario 1 
+DECLARE 
+@nombre varchar(100)
+
+	BEGIN 
+	set @nombre='hola mundo'
+	
+
+	print(@nombre)
+
+	END 
+
+--escenario 2 
+
+DECLARE 
+@nombre1 varchar(100)
+
+	BEGIN 
+	set @nombre1='hola mundo'
+	set @nombre1='hola peru'
+
+	print(@nombre1)
+
+	END 
+
+--escenario 3 
+
+DECLARE 
+@nombre2 varchar(100)
+
+	BEGIN 
+	set @nombre2='hola mundo'
+	set @nombre2= concat(@nombre2,' hola peru')
+
+	print(@nombre2)
+
+	END 
+
+--------------------------------
+-------- FUNCIONES -------------
+
+CREATE TABLE TB_EMPLEADOS 
+( DNI VARCHAR(8), 
+ NOMBRE VARCHAR(100)
+)
+
+INSERT INTO TB_EMPLEADOS VALUES('0908','JEAN PIERRE')
+INSERT INTO TB_EMPLEADOS VALUES('05608','JUAN')
+INSERT INTO TB_EMPLEADOS VALUES('0508','JOSE')
+INSERT INTO TB_EMPLEADOS VALUES('0308','PEDRO')
+
+SELECT DNI , RIGHT(CONCAT('00000000',DNI),8)
+FROM TB_EMPLEADOS
+
+--- SINTAXIS DE LAS FUNCIONES 
+
+CREATE FUNCTION NOMBRE_FUNCION (@VAR1 VARCHAR(10))
+RETURNS --TIPO DE DATO A RETORNAR 
+AS 
+	BEGIN 
+
+		RETURN -- EL RESULTADO 
+	END 
+
+-----------------------------
+
+CREATE FUNCTION FN_LIMPIEZA_DNI(@DOC VARCHAR(8))
+RETURNS VARCHAR(8)
+AS 
+	BEGIN 
+
+	RETURN RIGHT(CONCAT('00000000',@DOC),8)
+
+	END 
+
+--- UTILIZANDO LA FUNCION
+	SELECT DNI , dbo.FN_LIMPIEZA_DNI(DNI) AS DNI_COMPLETO
+	FROM TB_EMPLEADOS
