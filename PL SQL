@@ -1,4 +1,69 @@
 /* REPASO DE PLSQL */
 
+------------------------------------------------------------------------
+----------------------- CURSOS SQL INTERMEDIO --------------------------
+------------------------------------------------------------------------
 
--- SECCION 01
+
+------- FUNCIONES INTERESANTES -----------------------------------------
+
+-- UPPER  -> FUNCION MAYUSCULA
+-- DECODE -> FUNCION CONDICIONAL SIMILAR A CASE --- DECODE(NU_DIAS_ATRASO,0,'NO VENCIDO','VENCIDO')
+-- SUBSTR -> FUNCION PARA EXTRAER UN NUMERO DE CARACTARES DE UN CAMPO --- SUBSTR(TI_CLIENTE,1,6) 
+-- TRUNC  -> TRUNC(SYSDATE) -- CONVIERTE LA FECHA Y HORA ACTUAL A FORMATO FECHA dd-mm-yyyy
+
+------------------ EJERCICIOS -----------------
+
+/* 1. Mostrar el listado de pr?stamos (NU_PRESTAMO) de clientes nuevos (TI_CLIENTE = 
+?NUEVO?) desembolsados (FE_DESEMBOLSO) entre el 1 de sep-21 y el 3 de sep.21. 
+Mostrar tambi?n, el c?digo de producto (CO_PRODUCTO) y el saldo actual en soles 
+(MO_SALD_CAPI_MN), ordenando los resultados descendentemente en funci?n al saldo.*/
+
+SELECT NU_PRESTAMO,TI_CLIENTE,FE_DESEMBOLSO,CO_PRODUCTO,MO_SALD_CAPI_MN FROM UD_EGP
+WHERE TI_CLIENTE = 'NUEVO' AND (FE_DESEMBOLSO BETWEEN '01/09/2021' AND '03/09/2021')
+ORDER BY MO_SALD_CAPI_MN DESC
+
+/* 2. Indicar cuantos clientes tienen un saldo mayor a S/ 500,000. */
+
+SELECT COUNT(DISTINCT TI_CLIENTE) FROM UD_EGP WHERE MO_SALD_CAPI_MN > 500000
+
+/* 3. Mostrar el listado de pr?stamos de clientes con saldo entre S/ 5,000 y S/20,000 o que tenga 
+8 d?as de atraso, pero que necesariamente hayan desembolsado entre el periodo 202106 y 
+202107. Se necesita contar con la columna periodo (formato YYYYMM), saldos actual, 
+n?mero de pr?stamo, y una columna que indique que si el tipo de cliente el ?NUEVO?, 
+colocar ?NUEVO?, caso contrario colocar ?OTROS?.*/
+
+SELECT TO_CHAR(FE_DESEMBOLSO,'YYYYMM') PERIODO_DES,NU_PRESTAMO,MO_SALD_CAPI_MN,NU_DIAS_ATRA,TI_CLIENTE,
+DECODE(TI_CLIENTE,'NUEVO','NUEVO','OTROS') FLAG_CLIENTE
+FROM UD_EGP WHERE 
+((MO_SALD_CAPI_MN BETWEEN 5000 AND 20000)
+OR NU_DIAS_ATRA = 8) 
+AND (TO_CHAR(FE_DESEMBOLSO,'YYYYMM') BETWEEN '202306' AND '202307')
+
+
+/* 4. Listar los pr?stamos desembolsados durante el mes de septiembre-21, indicando su n?mero 
+de pr?stamo y saldo actual, adem?s agregar una columna TIPO_DOC_RESU que indique el 
+tipo de documento (DE_TIPO_DOCU) del cliente, en caso tenga ?DNI? o ?R.U.C.?, colocar 
+dichas palabras, caso contrario colocar la palabra ?OTROS?.*/
+
+SELECT A.NU_PRESTAMO, A.FE_DESEMBOLSO, A.MO_SALD_CAPI_MN,
+CASE WHEN B.DE_TIPO_DOCU = 'DNI' THEN 'DNI'
+     WHEN B.DE_TIPO_DOCU = 'R.U.C.' THEN 'R.U.C.'
+     ELSE 'OTROS' END TIPO_DOC_RESU
+     FROM UD_EGP A LEFT JOIN MD_CLIENTES B ON (A.CO_CLIENTE=B.CO_CLIENTE)
+     WHERE TO_CHAR(A.FE_DESEMBOLSO,'YYYYMM') = 202109
+     
+     
+/* 5. Sobre el ejercicio anterior, agrupar los resultados de la nueva columna creada 
+(TIPO_DOC_RESU), indicando la cantidad de cr?ditos, clientes distintos y saldo acumulado 
+por cada grupo (?DNI?, ?R.U.C.?, ?OTROS?). */
+
+SELECT TIPO_DOC_RESU, COUNT(TIPO_DOC_RESU) NUM_CLIENTES_T, COUNT(DISTINCT CO_CLIENTE) NUM_CLIENTES_DIS ,SUM(MO_SALD_CAPI_MN) SUM_SALDO
+       FROM (SELECT A.NU_PRESTAMO,A.CO_CLIENTE, A.FE_DESEMBOLSO, A.MO_SALD_CAPI_MN,
+       CASE WHEN B.DE_TIPO_DOCU = 'DNI' THEN 'DNI'
+       WHEN B.DE_TIPO_DOCU = 'R.U.C.' THEN 'R.U.C.'
+       ELSE 'OTROS' END TIPO_DOC_RESU
+       FROM UD_EGP A LEFT JOIN MD_CLIENTES B ON (A.CO_CLIENTE=B.CO_CLIENTE)
+       WHERE TO_CHAR(A.FE_DESEMBOLSO,'YYYYMM') = 202401) 
+       GROUP BY TIPO_DOC_RESU
+       
