@@ -4,15 +4,19 @@
 ----------------------- CURSOS SQL INTERMEDIO --------------------------
 ------------------------------------------------------------------------
 
-
+/* ------------------------------------------------------------------ */
 ------- FUNCIONES INTERESANTES -----------------------------------------
+/* ------------------------------------------------------------------ */
+
 
 -- UPPER  -> FUNCION MAYUSCULA
 -- DECODE -> FUNCION CONDICIONAL SIMILAR A CASE --- DECODE(NU_DIAS_ATRASO,0,'NO VENCIDO','VENCIDO')
 -- SUBSTR -> FUNCION PARA EXTRAER UN NUMERO DE CARACTARES DE UN CAMPO --- SUBSTR(TI_CLIENTE,1,6) 
 -- TRUNC  -> TRUNC(SYSDATE) -- CONVIERTE LA FECHA Y HORA ACTUAL A FORMATO FECHA dd-mm-yyyy
 
+/* ----------------------------------------- */
 ------------------ EJERCICIOS -----------------
+/* ----------------------------------------- */
 
 /* 1. Mostrar el listado de pr?stamos (NU_PRESTAMO) de clientes nuevos (TI_CLIENTE = 
 ?NUEVO?) desembolsados (FE_DESEMBOLSO) entre el 1 de sep-21 y el 3 de sep.21. 
@@ -32,6 +36,7 @@ SELECT COUNT(DISTINCT TI_CLIENTE) FROM UD_EGP WHERE MO_SALD_CAPI_MN > 500000
 202107. Se necesita contar con la columna periodo (formato YYYYMM), saldos actual, 
 n?mero de pr?stamo, y una columna que indique que si el tipo de cliente el ?NUEVO?, 
 colocar ?NUEVO?, caso contrario colocar ?OTROS?.*/
+
 
 SELECT TO_CHAR(FE_DESEMBOLSO,'YYYYMM') PERIODO_DES,NU_PRESTAMO,MO_SALD_CAPI_MN,NU_DIAS_ATRA,TI_CLIENTE,
 DECODE(TI_CLIENTE,'NUEVO','NUEVO','OTROS') FLAG_CLIENTE
