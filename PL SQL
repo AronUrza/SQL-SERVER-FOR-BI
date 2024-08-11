@@ -66,4 +66,76 @@ SELECT TIPO_DOC_RESU, COUNT(TIPO_DOC_RESU) NUM_CLIENTES_T, COUNT(DISTINCT CO_CLI
        FROM UD_EGP A LEFT JOIN MD_CLIENTES B ON (A.CO_CLIENTE=B.CO_CLIENTE)
        WHERE TO_CHAR(A.FE_DESEMBOLSO,'YYYYMM') = 202401) 
        GROUP BY TIPO_DOC_RESU
-       
+
+
+
+
+----------------------- EJERCICIOS PARTE 02 -----------------------
+
+
+
+/*Ejercicios:
+1.1. Crea una tabla llamada "MBCO_PRESTAMOS" con 7 columnas (Considerar la estructura de la HM_EGP)
+a) Fecha de actualización (FE_ACT): Por defecto toma la fecha del servidor de la BD
+b) Código de cliente (CO_CLIENTE)
+c) Número de préstamo (NU_PRESTAMO)
+d) Importe saldo (MO_SALDO)
+e) Estado del préstamo (CO_ESTA_OPER)
+f) Origen (CO_ORIGEN)
+g) Número de cambios (NU_CAMBIO): Por defecto toma el valor de 0*/
+
+
+CREATE  TABLE MBCO_PRESTAMOS_AUZ AS 
+SELECT SYSDATE FE_ACT, CO_CLIENTE,NU_PRESTAMO,MO_SALD_ACTU MO_SALDO,CO_ESTA_OPER,CO_CRITERIO CO_ORIGEN,0 AS NU_CAMBIO FROM HM_EGP WHERE 1=0
+
+
+
+/*1.2. Inserta en la tabla MBCO_PRESTAMOS el cliente 123 y el prestamo 100123
+1.3. Inserta en la tabla MBCO_PRESTAMOS un registro completo (Cliente 124 y demás datos)
+1.4. Inserta en la tabla MBCO_PRESTAMOS el cliente 125 (usando la tabla DUAL)
+1.5. Inserta en la tabla MBCO_PRESTAMOS cinco préstamos del stock de Junio 2023 (Consultar la HM_EGP)
+1.6. Inserta en la tabla MBCO_PRESTAMOS todos los préstamos del stock de Junio 2023 (retirando castigos) sin repetir los créditos ya insertados
+1.7. Confirmar las transacciones*/
+
+INSERT INTO MBCO_PRESTAMOS_AUZ (CO_CLIENTE,NU_PRESTAMO) VALUES (123,100123);
+INSERT INTO MBCO_PRESTAMOS_AUZ VALUES (SYSDATE,124,100124,1000,2,2,0);
+INSERT INTO MBCO_PRESTAMOS_AUZ (SELECT SYSDATE, 125, 100125, 3000, 3, 3, 0 FROM DUAL); -- NO REQUIERE EL VALUES
+INSERT INTO MBCO_PRESTAMOS_AUZ (SELECT SYSDATE FE_ACT, CO_CLIENTE,NU_PRESTAMO,MO_SALD_ACTU MO_SALDO,CO_ESTA_OPER,CO_CRITERIO CO_ORIGEN,0 AS NU_CAMBIO FROM HM_EGP 
+                                WHERE TO_CHAR(FE_PROCESO,'yyyymm') = 202306 AND ROWNUM <= 5);
+INSERT INTO MBCO_PRESTAMOS_AUZ (SELECT SYSDATE FE_ACT, CO_CLIENTE,NU_PRESTAMO,MO_SALD_ACTU MO_SALDO,CO_ESTA_OPER,CO_CRITERIO CO_ORIGEN,0 AS NU_CAMBIO FROM HM_EGP 
+                                WHERE TO_CHAR(FE_PROCESO,'yyyymm') = 202306 AND NU_PRESTAMO NOT IN (117010180,116800306,116835613,116782483,116959864));                              
+COMMIT;
+
+
+SELECT * FROM MBCO_PRESTAMOS_AUZ;
+
+/*2.1. Actualizar el campo NRO_PRESTAMO para aquellos registros sin NRO_PRESTAMO, se debe sumar 100000 al codigo de cliente y este  resultado asignarse al NRO_PRESTAMO.
+2.2. Actualizar los campos importe saldo y estado del prestamo para los clientes sin estado del préstamo; asignar el monto de 5000 y estado igual a 'N'
+2.3. Actualizar el campo CO_ORIGEN, si el código de cliente tiene tres digitos colocar "CREADO", en caso contrario colocar "HM_EGP"
+2.4. Dehacer las transacciones de 2.1 al 2.3.
+2.5. Actualizar el número de cambios de cada registro en cada transacción 
+2.6. Ejecutar las consultas 2.1, 2.2 y 2.3. Crear un punto de guardado en la transacción 2.3. y deshacer los cambios en el punto de guardado; luego confirmar las transacciones 2.1 y 2.2.*/
+
+
+UPDATE MBCO_PRESTAMOS_AUZ
+SET NU_PRESTAMO = CO_CLIENTE + 100000
+WHERE NU_PRESTAMO IS NULL;
+
+UPDATE MBCO_PRESTAMOS_AUZ
+SET MO_SALDO = 5000 , CO_ESTA_OPER = 'N'
+WHERE CO_ESTA_OPER IS NULL;
+
+UPDATE MBCO_PRESTAMOS_AUZ
+SET CO_ORIGEN = DECODE(LENGTH(CO_CLIENTE)=3,'CREADO','HM_EGP');
+
+/*ALTER TABLE MBCO_PRESTAMOS_AUZ
+MODIFY CO_ORIGEN VARCHAR(15);*/
+ 
+UPDATE MBCO_PRESTAMOS_AUZ
+SET CO_ORIGEN = CASE WHEN LENGTH(CO_CLIENTE) = 3 THEN 'CREADO'
+                ELSE 'HM_EGP' END;
+
+
+SELECT * FROM MBCO_PRESTAMOS_AUZ WHERE CO_ESTA_OPER IS NULL
+
+
