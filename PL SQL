@@ -143,4 +143,30 @@ SET CO_ORIGEN = CASE WHEN LENGTH(CO_CLIENTE) = 3 THEN 'CREADO'
 
 SELECT * FROM MBCO_PRESTAMOS_AUZ WHERE CO_ESTA_OPER IS NULL
 
+/* ------------------------------------------------------------- */
+----------------------- EJERCICIOS PARTE 03 -----------------------
+/* ------------------------------------------------------------- */
+
+/*
+Elabora el script que cree una tabla llamada MBCO_SESION2 con la estructura siguiente:
+0. Periodo
+1. Código del cliente
+2. Nombre del cliente
+3. Número del préstamo
+4. Fecha de desembolso del préstamo (conversión en formato YYYYMM)
+5. Monto desembolsado (multiplicar por tipo de cambio)
+6. Nombre de la agencia
+7. Monto total (Suma de todos los créditos desembolsados); tipo NUMBER
+8. Proporcion; tipo NUMBER
+Los campos del 1 al 6 deben mantener los mismos nombres y tipos de cada fuente de datos.
+*Fuente de datos --> HM_EGP, MD_CLIENTES, MD_SUCURSAL y MD_PRODUCTO_01
+
+Luego inserta los créditos del stock de Enero 2023 exclusivamente de los clientes con tipo documento "RUC", retira los castigos.
+En segundo lugar, crea una consulta que actualice el campo "Proporcion" diviendo el monto del desembolso entre el monto total.
+En tercer lugar, crea una consulta que actualice el campo "Proporcion" redondeandolo a 2 decimales.
+Finalmente, confirma todas las transacciones. */
+
+
+
+
 
