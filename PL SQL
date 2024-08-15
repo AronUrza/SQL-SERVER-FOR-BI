@@ -42,18 +42,13 @@ WHERE table_name = 'AUZ_MBCO_PRESTAMOS';
 
 DROP TABLE AUZ_MBCO_PRESTAMOS;
 
+----------------------------------------------------------------------------
 
-
-
-
-
-
-
-
-
-
-
-
+/*
+2.1. Copia el último mes del stock de créditos (tabla HM_EGP); luego truncar la tabla; finalmente eliminar la tabla.
+2.2. Crea una tabla que guarde el codigo de cliente, fecha de desembolso, número de préstamo e importe saldo.
+2.3. Crear una tabla que guarde el codigo de cliente, número de préstamo, importe desembolsado (multiplicar por el tipo de cambio) y fecha de desembolso; retirar castigos y considerando solo el producto "MICAPITAL S/."
+*/
 
 
 /* REPASO DE PLSQL */
