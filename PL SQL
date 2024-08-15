@@ -1,3 +1,61 @@
+------- PRIMEROS PASOS EN SQL INTERMEDIO --------
+
+/*  1.1. Crea una tabla llamada "TMP_PRESTAMOS" con 5 columnas
+    a) Fecha de actualización (FEC_ACT)
+    b) Código de cliente (COD_CLI)
+    c) Número de préstamo (NU_PRESTAMO)
+    d) Importe saldo (MO_SALDO)
+    e) Estado del préstamo (CO_ESTA_OPER) */
+
+CREATE TABLE AUZ_TMP_PRESTAMOS 
+       (FEC_ACT DATE,
+        COD_CLI NUMBER,
+        NU_PRESTAMO NUMBER,
+        MO_SALDO NUMBER,
+        CO_ESTA_OPER NUMBER);                
+
+-- 1.2. Modifica el nombre de la columna COD_CLI por CO_CLIENTE
+
+ALTER TABLE AUZ_TMP_PRESTAMOS
+      RENAME COLUMN COD_CLI TO CO_CLIENTE;
+      
+-- 1.3. Renombra la tabla creada por MBCO_PRESTAMOS
+
+ALTER TABLE AUZ_TMP_PRESTAMOS
+      RENAME TO AUZ_MBCO_PRESTAMOS;
+      
+/* PARA LAS SIGUIENTES SENTENCIAS SE REQUIERE EL COMMIT PARA CONFIRMAR LOS CAMBIOS: 
+   INSERT: Para agregar nuevas filas a una tabla.
+   UPDATE: Para modificar datos existentes en una tabla.
+   DELETE: Para eliminar filas de una tabla.
+   MERGE: Para combinar operaciones de inserción y actualización. */
+   
+COMMIT;      
+
+-- 1.4. Describe los campos de la tabla creada
+
+SELECT column_name, data_type, data_length
+FROM all_tab_columns
+WHERE table_name = 'AUZ_MBCO_PRESTAMOS';
+
+-- 1.5. Elimina la tabla de forma permanente
+
+DROP TABLE AUZ_MBCO_PRESTAMOS;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* REPASO DE PLSQL */
 
 ------------------------------------------------------------------------
