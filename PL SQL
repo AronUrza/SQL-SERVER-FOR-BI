@@ -257,4 +257,53 @@ SELECT * FROM AUZ_SESION2
 UPDATE AUZ_SESION2
 SET PROPORCION = ROUND(MO_DESEMBOLSO / (SELECT SUM(MO_DESEMBOLSO) FROM AUZ_SESION2),2);
 
+-----------------------------------------------------------------------------------------------------
 
+--########################################--
+--#####    EXAMEN SQL INTERMEDIO   #######--
+--########################################--
+
+/* 1. CREAR UN BLOQUE ANÓNIMO EL CUAL CARGUE EN LA TABLA BASE_TIPO_CLIE (NU_PERI_MES, TIPO_CLIENTE Y NRO_CLIENTES) 
+LA CANTIDAD DE CLIENTES DEL CIERRE DE CADA MES DEL 2024 (ENERO A JUNIO 2024) POR TIPO DE CLIENTE (USAR EL CAMPO DE_TIPO_CLIE 
+DE LA TABLA MD_CLIENTES). EN EL CASO QUE SEA UN TIPO DE CLIENTE "PERSONA NATURAL" O "PERSONA JURÍDICA" DEBE MOSTRARSE "NATURAL" 
+Y "JURÍDICA" RESPECTIVAMENTE, CASO CONTRARIO MOSTRAR "OTROS" (SE RECOMIENDA USAR CASE WHEN). PARA ELLO DEBE USAR LA TABLA HM_EGP 
+Y DEBE REALIZAR LA CARGA PERIODO POR PERIODO EN UN BLOQUE RECURSIVO DE SU PREFERENCIA (FOR, WHILE, ETC.).
+*/
+
+------------------------------------------------------------------------
+-- CREACION DE LA TABLA ------------------------------------------------
+------------------------------------------------------------------------
+
+CREATE TABLE BASE_TIPO_CLIE (
+       NU_PERI_MES NUMBER,
+       TIPO_CLIENTE VARCHAR(25),
+       NRO_CLIENTES NUMBER);         
+
+------------------------------------------------------------------------
+-- GENERAMOS EL BUCLE PARA LA INSERCION DE DATOS EN CADA PERIODO -------
+------------------------------------------------------------------------
+
+-- CREATED ON 5/08/2024 BY 22645001 
+DECLARE 
+  -- LOCAL VARIABLES HERE
+BEGIN
+  -- TEST STATEMENTS HERE
+  FOR V_MES IN 202401..202406
+    LOOP  
+    
+    INSERT INTO BASE_TIPO_CLIE
+    SELECT B.NU_PERI_MES, 
+           CASE WHEN A.DE_TIPO_CLIE = 'PERSONA NATURAL' THEN 'Natural'
+                WHEN A.DE_TIPO_CLIE = 'PERSONA JURIDICA' THEN 'Jurídica'
+                ELSE 'Otros' END TIPO_CLIENTE,
+           COUNT(A.CO_CLIENTE) FROM MD_CLIENTES A LEFT JOIN HM_EGP B ON (A.CO_CLIENTE=B.CO_CLIENTE)
+           WHERE B.NU_PERI_MES = V_MES
+           GROUP BY  B.NU_PERI_MES, 
+           CASE WHEN A.DE_TIPO_CLIE = 'PERSONA NATURAL' THEN 'Natural'
+                WHEN A.DE_TIPO_CLIE  = 'PERSONA JURIDICA' THEN 'Jurídica'
+                ELSE 'Otros' END;
+            COMMIT;
+END LOOP;  
+END;
+
+SELECT * FROM BASE_TIPO_CLIE;
