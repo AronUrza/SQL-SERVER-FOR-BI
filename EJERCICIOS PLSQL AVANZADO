@@ -1,0 +1,69 @@
+
+--##################################################
+--          REPASO SQL AVANZADO                   --
+--##################################################
+
+-- TABLAS
+
+/*
+AUZ_CLIENTES_PBA
+AUZ_TRANSA_PBA
+AUZ_CREDITOS_PBA  */
+
+/*1- Clientes y Registros
+¿Cuántos clientes se registraron en cada mes del año 2023, y cuál fue el promedio de edad de los clientes registrados en cada mes?
+*/
+
+SELECT COUNT(CLIENTE_ID), AVG(EDAD), TO_CHAR(FECHA_REGISTRO,'YYYYMM') MES 
+       FROM AUZ_CLIENTES_PBA WHERE TO_CHAR(FECHA_REGISTRO,'YYYY') = '2023'
+       GROUP BY TO_CHAR(FECHA_REGISTRO,'YYYYMM') 
+       
+       
+/*2- Transacciones
+¿Cuál es el monto total depositado por cada cliente en los últimos 6 meses, y cuál es la transacción de mayor monto para cada cliente en ese periodo?
+*/      
+
+SELECT CLIENTE_ID, SUM(MONTO) MONTO_TOTAL, MAX(MONTO) MAX_MONTO
+       FROM AUZ_TRANSA_PBA WHERE UPPER(TIPO) =  'DEPOSITO' AND (FECHA BETWEEN (SELECT ADD_MONTHS(MAX(FECHA), -6) FROM AUZ_TRANSA_PBA) AND (SELECT MAX(FECHA) FROM AUZ_TRANSA_PBA))
+       GROUP BY CLIENTE_ID
+       
+       
+/*3 -Créditos Aprobados
+¿Cuál es el promedio y la desviación estándar del monto de los créditos aprobados en los últimos dos años para clientes de cada ciudad?
+*/
+
+
+SELECT B.CIUDAD, AVG(A.MONTO) PROM_MONTO, STDDEV(A.MONTO) DEVST 
+       FROM AUZ_CREDITOS_PBA A LEFT JOIN AUZ_CLIENTES_PBA B ON (A.CLIENTE_ID =B.CLIENTE_ID) WHERE (FECHA_APROBACION >= (SELECT ADD_MONTHS(MAX(FECHA_APROBACION),-24) FROM AUZ_CREDITOS_PBA))
+       AND UPPER(A.ESTADO) = 'APROBADO'
+       GROUP BY B.CIUDAD
+
+
+/*4- Clientes con Créditos Rechazados
+¿Cuántos clientes han tenido al menos un crédito rechazado y cuántos han tenido más de uno? */
+
+
+-- Contar clientes con al menos un crédito rechazado
+
+SELECT COUNT(DISTINCT CLIENTE_ID) AS CLI
+FROM AUZ_CREDITOS_PBA
+WHERE ESTADO = 'rechazado';
+
+-- Contar clientes con más de un crédito rechazado
+SELECT COUNT(CLIENTE_ID) AS CLI
+FROM (
+    SELECT CLIENTE_ID, COUNT(*) AS CRechazados
+    FROM AUZ_CREDITOS_PBA
+    WHERE ESTADO = 'rechazado'
+    GROUP BY CLIENTE_ID
+    HAVING COUNT(*) > 1)
+    
+    
+/*5-Edad y Transacciones
+¿Cuál es la edad promedio de los clientes que han realizado más de 10 transacciones en el último año,
+y cuál es la transacción promedio de estos clientes? */    
+
+SELECT ROUND(AVG(EDAD),2) EDAD_PROM FROM  AUZ_CLIENTES_PBA 
+       WHERE EDAD IN (SELECT CLIENTE_ID FROM (( SELECT CLIENTE_ID, COUNT(*) FROM AUZ_TRANSA_PBA
+            GROUP BY CLIENTE_ID HAVING COUNT(*) > 10)))
+
