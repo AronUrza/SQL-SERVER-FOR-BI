@@ -67,3 +67,119 @@ SELECT ROUND(AVG(EDAD),2) EDAD_PROM FROM  AUZ_CLIENTES_PBA
        WHERE EDAD IN (SELECT CLIENTE_ID FROM (( SELECT CLIENTE_ID, COUNT(*) FROM AUZ_TRANSA_PBA
             GROUP BY CLIENTE_ID HAVING COUNT(*) > 10)))
 
+
+/*6. ¿Cuáles son los 5 clientes con más transacciones realizadas, cuál es el monto total de sus transacciones,
+ y cuál es el tipo de transacción más común para cada uno de ellos */
+
+WITH TA AS (
+SELECT CLIENTE_ID ,NUM_TRANS,MONTO_TO FROM (
+SELECT  CLIENTE_ID, COUNT(*) NUM_TRANS, SUM(MONTO) MONTO_TO FROM AUZ_TRANSA_PBA
+            GROUP BY CLIENTE_ID ORDER BY COUNT(*) DESC) WHERE ROWNUM <= 5) ,
+      TB AS ( SELECT CLIENTE_ID, TIPO, COUNT(*) FREC FROM  AUZ_TRANSA_PBA
+                   WHERE CLIENTE_ID IN ( SELECT CLIENTE_ID FROM TA)
+                   GROUP BY CLIENTE_ID, TIPO
+                   ORDER BY CLIENTE_ID,COUNT(*) DESC) 
+SELECT T.CLIENTE_ID, T.NUM_TRANS,T.MONTO_TO, TB.TIPO TCOMUN
+       FROM TA T JOIN TB ON (T.CLIENTE_ID= TB.CLIENTE_ID) ;
+            
+            
+----------------------------------------------------------------------------------------------------------------------
+       
+WITH TA AS (
+    SELECT CLIENTE_ID, NUM_TRANS, MONTO_TO
+    FROM (
+        SELECT CLIENTE_ID, COUNT(*) AS NUM_TRANS, SUM(MONTO) AS MONTO_TO
+        FROM AUZ_TRANSA_PBA
+        GROUP BY CLIENTE_ID
+        ORDER BY COUNT(*) DESC
+    ) WHERE ROWNUM <= 5
+),
+TB AS (
+    SELECT CLIENTE_ID, TIPO, COUNT(*) AS FREC
+    FROM AUZ_TRANSA_PBA
+    WHERE CLIENTE_ID IN (SELECT CLIENTE_ID FROM TA)
+    GROUP BY CLIENTE_ID, TIPO
+),
+TB_RANKED AS (
+    SELECT CLIENTE_ID, TIPO, ROW_NUMBER() OVER (PARTITION BY CLIENTE_ID ORDER BY COUNT(*) DESC) AS rn
+    FROM TB
+    GROUP BY CLIENTE_ID, TIPO
+)
+SELECT T.CLIENTE_ID, T.NUM_TRANS, T.MONTO_TO, TB.TIPO AS TCOMUN
+FROM TA T
+JOIN (SELECT CLIENTE_ID, TIPO
+      FROM TB_RANKED
+      WHERE rn = 1) TB
+ON T.CLIENTE_ID = TB.CLIENTE_ID;
+
+
+
+/*7- Monto Total de Créditos por Ciudad
+¿Cuál es el monto total de créditos aprobados por ciudad y el número promedio de créditos aprobados por cliente en cada ciudad? */
+      
+
+SELECT 
+    c.CIUDAD,
+    SUM(cr.MONTO) AS MONTO_TOTAL,
+    AVG(cr.COUNT_CREDITOS) AS PROMEDIO_CREDITOS
+FROM 
+    (AUZ_CLIENTES_PBA) c
+INNER JOIN 
+    (SELECT CLIENTE_ID, MONTO, COUNT(*) OVER (PARTITION BY CLIENTE_ID) AS COUNT_CREDITOS
+     FROM AUZ_CREDITOS_PBA
+     WHERE ESTADO = 'aprobado') cr
+ON 
+    c.CLIENTE_ID = cr.CLIENTE_ID
+GROUP BY 
+    c.CIUDAD;
+
+
+/*8. Clientes con Mayor Deuda
+¿Quiénes son los 3 clientes con la mayor cantidad de deuda (monto total de créditos aprobados), y cuál es el promedio de sus transacciones en el último año? */
+
+
+WITH TBA AS (SELECT CLIENTE_ID, MONTO_T FROM (SELECT CLIENTE_ID,SUM(MONTO) MONTO_T FROM AUZ_CREDITOS_PBA
+            WHERE ESTADO= 'aprobado' group by cliente_id order by MONTO_T DESC) WHERE ROWNUM <=3 ),
+     TBB AS (SELECT CLIENTE_ID, AVG(MONTO) AV_MONTO FROM AUZ_TRANSA_PBA WHERE CLIENTE_ID IN (SELECT  CLIENTE_ID FROM TBA) GROUP BY CLIENTE_ID)
+     SELECT  A.CLIENTE_ID,B.MONTO_T DEUDA_TOTAL,C.AV_MONTO PROMEDIO_TRANS FROM AUZ_CLIENTES_PBA A
+     LEFT JOIN  TBA B ON (A.CLIENTE_ID=B.CLIENTE_ID) LEFT JOIN TBB C ON (B.CLIENTE_ID=C.CLIENTE_ID) 
+     WHERE A.CLIENTE_ID IN (SELECT  CLIENTE_ID FROM TBA)
+
+
+
+/*9. Transacciones por Tipo y Mes
+¿Cuál es el número de transacciones de cada tipo (retiro/deposito) por mes en el último año, y cuál es el monto promedio de transacciones de cada tipo por mes? */
+
+SELECT TO_CHAR(FECHA,'YYYYMM') MES, TIPO, COUNT(*) NUM_TRANS,ROUND(AVG(MONTO),2) PROMEDIO_TRANS FROM AUZ_TRANSA_PBA
+       WHERE FECHA > ADD_MONTHS((SELECT MAX(FECHA) FROM AUZ_TRANSA_PBA),-12) 
+       GROUP BY TO_CHAR(FECHA,'YYYYMM'),TIPO
+       ORDER BY TO_CHAR(FECHA,'YYYYMM')
+       
+ 
+/*10. Clientes sin Créditos
+¿Cuántos clientes no tienen ningún crédito y cuántos de ellos han realizado al menos una transacción en el último año? */
+      
+SELECT A.CLIENTE_ID,A.NOMBRE,A.APELLIDO, COUNT(C.CLIENTE_ID)
+       FROM AUZ_CLIENTES_PBA A LEFT JOIN AUZ_CREDITOS_PBA B ON (A.CLIENTE_ID=B.CLIENTE_ID)  
+       LEFT JOIN  AUZ_TRANSA_PBA C ON (A.CLIENTE_ID = C.CLIENTE_ID)
+       WHERE B.CLIENTE_ID IS NULL 
+       GROUP BY A.CLIENTE_ID,A.NOMBRE,A.APELLIDO
+       HAVING COUNT(C.CLIENTE_ID) > 0
+
+
+
+/*11- Monto Promedio de Créditos por Edad
+¿Cuál es el monto promedio de los créditos aprobados para cada rango de edad (18-30, 31-50, 51-70), y cuántos clientes hay en cada rango? */
+
+
+WITH TA AS (SELECT CLIENTE_ID,CASE WHEN EDAD BETWEEN 18 AND 30 THEN '18-30'
+                        WHEN EDAD BETWEEN 31 AND 50 THEN '31-50'
+                        WHEN EDAD BETWEEN 51 AND 70 THEN '51-70' END RANGO_EDAD
+                        FROM AUZ_CLIENTES_PBA),
+     TB AS (SELECT CLIENTE_ID,MONTO FROM  AUZ_CREDITOS_PBA
+        WHERE ESTADO = 'aprobado')
+     SELECT  B.RANGO_EDAD, SUM(A.MONTO),COUNT(DISTINCT A.CLIENTE_ID)
+             FROM TB A LEFT JOIN TA B ON (A.CLIENTE_ID =B.CLIENTE_ID)     
+             GROUP BY RANGO_EDAD
+                                                    
+                      
