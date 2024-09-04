@@ -183,3 +183,4 @@ WITH TA AS (SELECT CLIENTE_ID,CASE WHEN EDAD BETWEEN 18 AND 30 THEN '18-30'
              GROUP BY RANGO_EDAD
                                                     
                       
+-------------------------- EJERCICIOS AVANZADOS PARTE DOS 
