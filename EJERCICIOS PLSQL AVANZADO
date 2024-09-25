@@ -1,14 +1,14 @@
-
 --##################################################
 --          REPASO SQL AVANZADO                   --
 --##################################################
 
 -- TABLAS
 
-/*
-AUZ_CLIENTES_PBA
-AUZ_TRANSA_PBA
-AUZ_CREDITOS_PBA  */
+/* AUZ_CLIENTES_PBA
+   AUZ_TRANSA_PBA
+   AUZ_CREDITOS_PBA  */
+
+-- EJERCICIOS NIVEL AVANZADO: 
 
 /*1- Clientes y Registros
 ¿Cuántos clientes se registraron en cada mes del año 2023, y cuál fue el promedio de edad de los clientes registrados en cada mes?
@@ -71,20 +71,7 @@ SELECT ROUND(AVG(EDAD),2) EDAD_PROM FROM  AUZ_CLIENTES_PBA
 /*6. ¿Cuáles son los 5 clientes con más transacciones realizadas, cuál es el monto total de sus transacciones,
  y cuál es el tipo de transacción más común para cada uno de ellos */
 
-WITH TA AS (
-SELECT CLIENTE_ID ,NUM_TRANS,MONTO_TO FROM (
-SELECT  CLIENTE_ID, COUNT(*) NUM_TRANS, SUM(MONTO) MONTO_TO FROM AUZ_TRANSA_PBA
-            GROUP BY CLIENTE_ID ORDER BY COUNT(*) DESC) WHERE ROWNUM <= 5) ,
-      TB AS ( SELECT CLIENTE_ID, TIPO, COUNT(*) FREC FROM  AUZ_TRANSA_PBA
-                   WHERE CLIENTE_ID IN ( SELECT CLIENTE_ID FROM TA)
-                   GROUP BY CLIENTE_ID, TIPO
-                   ORDER BY CLIENTE_ID,COUNT(*) DESC) 
-SELECT T.CLIENTE_ID, T.NUM_TRANS,T.MONTO_TO, TB.TIPO TCOMUN
-       FROM TA T JOIN TB ON (T.CLIENTE_ID= TB.CLIENTE_ID) ;
-            
-            
-----------------------------------------------------------------------------------------------------------------------
-       
+                            
 WITH TA AS (
     SELECT CLIENTE_ID, NUM_TRANS, MONTO_TO
     FROM (
@@ -178,9 +165,72 @@ WITH TA AS (SELECT CLIENTE_ID,CASE WHEN EDAD BETWEEN 18 AND 30 THEN '18-30'
                         FROM AUZ_CLIENTES_PBA),
      TB AS (SELECT CLIENTE_ID,MONTO FROM  AUZ_CREDITOS_PBA
         WHERE ESTADO = 'aprobado')
-     SELECT  B.RANGO_EDAD, SUM(A.MONTO),COUNT(DISTINCT A.CLIENTE_ID)
+     SELECT  B.RANGO_EDAD, AVG(A.MONTO),COUNT(DISTINCT A.CLIENTE_ID)
              FROM TB A LEFT JOIN TA B ON (A.CLIENTE_ID =B.CLIENTE_ID)     
-             GROUP BY RANGO_EDAD
-                                                    
-                      
--------------------------- EJERCICIOS AVANZADOS PARTE DOS 
+             GROUP BY RANGO_EDAD;
+                           
+-- MANERA 2 DE HACER 
+
+SELECT RANGO_EDAD, AVG(MONTO), COUNT(DISTINCT CLIENTE_ID) FROM (          
+SELECT A.CLIENTE_ID, 
+       CASE WHEN A.EDAD BETWEEN 18 AND 30 THEN '18-30'
+            WHEN A.EDAD BETWEEN 31 AND 50 THEN '31-50'
+            WHEN A.EDAD BETWEEN 51 AND 70 THEN '51-70' END RANGO_EDAD,
+       B.MONTO
+       FROM AUZ_CLIENTES_PBA A LEFT JOIN AUZ_CREDITOS_PBA B ON A.CLIENTE_ID = B.CLIENTE_ID
+       WHERE UPPER(B.ESTADO) = 'APROBADO')
+GROUP BY RANGO_EDAD;    
+             
+/*12 - Monto Máximo y Mínimo de Transacciones
+¿Cuál es el monto máximo y mínimo de las transacciones realizadas en el último mes, desglosado por tipo de transacción?*/
+             
+SELECT TIPO, MAX(MONTO), MIN(MONTO) FROM AUZ_TRANSA_PBA
+       WHERE TO_CHAR(FECHA,'YYYYMM') = (SELECT TO_CHAR(MAX(FECHA),'YYYYMM') FROM AUZ_TRANSA_PBA)
+       GROUP BY TIPO;
+
+/*13- Clientes Activos
+¿Cuántos clientes han realizado al menos una transacción en el último mes, y cuál es el promedio de transacciones por cliente en ese periodo? */
+       
+       
+SELECT TO_CHAR(FECHA,'YYYYMM') AS MES,
+       COUNT(DISTINCT CLIENTE_ID) AS NUM_CLIENTES,
+       COUNT(CLIENTE_ID)/COUNT(DISTINCT CLIENTE_ID) AS PROM_TRANS
+       FROM AUZ_TRANSA_PBA
+WHERE TO_CHAR(FECHA,'YYYYMM') = (SELECT TO_CHAR(MAX(FECHA),'YYYYMM') FROM AUZ_TRANSA_PBA)
+GROUP BY TO_CHAR(FECHA,'YYYYMM');
+
+/*14-Clientes con Transacciones y Créditos
+¿Cuántos clientes han realizado al menos una transacción y tienen al menos un crédito aprobado en el último año?*/
+
+SELECT COUNT(DISTINCT A.CLIENTE_ID) AS NUM_CLIENTES
+       FROM AUZ_CLIENTES_PBA A 
+       INNER JOIN AUZ_TRANSA_PBA B ON A.CLIENTE_ID = B.CLIENTE_ID
+       INNER JOIN AUZ_CREDITOS_PBA C ON A.CLIENTE_ID = C.CLIENTE_ID
+WHERE FECHA_APROBACION >= ADD_MONTHS((SELECT MAX(FECHA_APROBACION)FROM AUZ_CREDITOS_PBA),-12) AND
+      UPPER(C.ESTADO) = 'APROBADO';
+
+
+/*15- Créditos por Estado
+¿Cuál es la proporción de créditos en cada estado (aprobado/rechazado/en proceso) y cuál es la distribución de montos para cada estado? */
+
+SELECT ESTADO,
+       COUNT(*) AS NUM_CREDITOS,
+       ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM AUZ_CREDITOS_PBA), 2) AS PROPORCION,
+       AVG(MONTO) AS MEDIA,
+       MEDIAN(MONTO) AS MEDIANA,
+       STDDEV(MONTO) AS DESTD,
+       MIN(MONTO) AS MINIMO,
+       MAX(MONTO) AS MAXIMO
+FROM AUZ_CREDITOS_PBA
+GROUP BY ESTADO;
+
+
+---------------------------------------------------------------------------------------
+SELECT * FROM AUZ_CLIENTES_PBA;
+SELECT * FROM AUZ_TRANSA_PBA;
+SELECT * FROM AUZ_CREDITOS_PBA 
+
+
+
+
+
